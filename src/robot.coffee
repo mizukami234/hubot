@@ -312,19 +312,18 @@ class Robot
     address = process.env.EXPRESS_BIND_ADDRESS or process.env.BIND_ADDRESS or '0.0.0.0'
 
     express = require 'express'
+    basicAuth = require 'basic-auth-connect'
+    bodyParser = require 'body-parser'
     multipart = require 'connect-multiparty'
 
     app = express()
 
-    app.use (req, res, next) =>
-      res.setHeader "X-Powered-By", "hubot/#{@name}"
-      next()
+    app.set "x-powered-by", "hubot/#{@name}"
 
-    app.use express.basicAuth user, pass if user and pass
-    app.use express.query()
+    app.use basicAuth user, pass if user and pass
 
-    app.use express.json()
-    app.use express.urlencoded()
+    app.use bodyParser.json()
+    app.use bodyParser.urlencoded({ extended: true })
     # replacement for deprecated express.multipart/connect.multipart
     # limit to 100mb, as per the old behavior
     app.use multipart(maxFilesSize: 100 * 1024 * 1024)
@@ -333,7 +332,8 @@ class Robot
 
     try
       @server = app.listen(port, address)
-      @router = app
+      @router = express.Router()
+      app.use @router
     catch err
       @logger.error "Error trying to start HTTP server: #{err}\n#{err.stack}"
       process.exit(1)
