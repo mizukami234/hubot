@@ -330,6 +330,8 @@ class Robot
 
     app.use express.static stat if stat
 
+    @app = app
+
     try
       @server = app.listen(port, address)
       @router = express.Router()
